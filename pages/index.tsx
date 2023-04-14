@@ -149,21 +149,25 @@ export default function Home() {
       }
       console.log("comparing ", expectedOutputReveresedArray, "the output: ", output)
       if (expectedOutputReveresedArray !== output) {
-        console.log("not the same")
-        newWeight1 = Math.fround(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output))).toFixed(2)
-        newWeight2 = Math.fround(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output))).toFixed(2)
-        console.log("two new weights", newWeight1, newWeight2)
-         const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
-        const answer = pattern2<values.threshhold?0:1
-allPatterns.push({weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer})
-      }
-      else{
+        // while (expectedOutputReveresedArray !== output) {
+
+          console.log("not the same")
+          newWeight1 = Math.fround(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output))).toFixed(2)
+          newWeight2 = Math.fround(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output))).toFixed(2)
+          console.log("two new weights", newWeight1, newWeight2)
+
+          const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
+          const answer = pattern2 < values.threshhold ? 0 : 1
+          allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer })
+        }
+      // }
+      else {
 
         console.log("the same")
-              allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output })
-        
-            }
+        allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output })
+
       }
+    }
     return allPatterns;
 
     console.log("array elements", allPatterns);
