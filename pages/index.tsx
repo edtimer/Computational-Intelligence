@@ -64,6 +64,14 @@ export default function Home() {
     // const result =
 
   }
+  interface DataReceived {
+    weight1: number
+    weight2: number
+    input1: number
+    input2: number
+    output: number
+
+  }
   const [weightOne, setWeightOne] = useState(0.0)
   const [weightTwo, setWeightTwo] = useState(0.0)
   const [operation, setOperation] = useState('AND')
@@ -72,39 +80,54 @@ export default function Home() {
   const [threshhold, setThreshhold] = useState(0.0)
   const [learningRate, setLearningRate] = useState(0.0)
   const [showTable, setShowTable] = useState(false)
-const calculation = (values:any)=>{
-  //'' added to number converts it to string
+  const [result, setResult] = useState([{}])
+  const calculation = (values: any) => {
+    //'' added to number converts it to string
 
-  //create a big array of objects
-const allPatterns=[]
-  // {w1,w2,input1,input2,result}
-  const input1= ''+values.input1;
-  const input2 = ''+values.input2;
-  const input1Array = Array.from(String(input1), Number);
-  const input2Array = Array.from(String(input2), Number);
-  const lengthInput1 = input1Array.length
-  const lengthInput2 = input2Array.length
-console.log("values pure",values)
-  console.log("arrays",input1Array,input2Array)
-  // const element ={input1,input2,w1,w2}
-  // allPatterns.push(element)
-  console.log("all input element1,element2,w1,w2",input1Array.slice(-1)[0],input2Array.slice(-1)[0],values.w1,values.w2)
-  setWeightOne(values.w1)
-  setWeightTwo(values.w2)
-//  for(let i=0;i<values.patternCount;i++){
-const pattern  =(input1Array.slice(-1)[0]*values.w1)+(input2Array.slice(-1)[0] *values.w2)
- console.log(`the result`,pattern)
- if(pattern>values.threshhold){
-  //recalculate the weights
- }
- //add the number to the table
+    //create a big array of objects
+    const allPatterns = []
+    // {w1,w2,input1,input2,result}
+    var newWeight1 = values.w1;
+    var newWeight2 = values.w2;
+    var output;
+    const learningRate = values.learningRate;
+    const input1 = '' + values.input1;
+    const input2 = '' + values.input2;
+    const input1Array = Array.from(String(input1), Number);
+    const input2Array = Array.from(String(input2), Number);
+    const lengthInput1 = input1Array.length
+    const lengthInput2 = input2Array.length
+    console.log("values pure", values)
+    console.log("array length", lengthInput1, lengthInput2)
+    console.log("arrays", input1Array, input2Array)
+    // const element ={input1,input2,w1,w2}
+    // allPatterns.push(element)
+    console.log("all input element1,element2,w1,w2", input1Array.slice(-1)[0], input2Array.slice(-1)[0], values.w1, values.w2)
+    setWeightOne(values.w1)
+    setWeightTwo(values.w2)
+    for (let i = 0; i < lengthInput1; i++) {
+      const pattern = (input1Array.slice(-1)[i] * values.w1) + (input2Array.slice(-1)[i] * values.w2)
+      console.log(`the result`, pattern)
+      if (pattern > values.threshhold) {
 
+        output = 1
+      }
+      else {
+        output = 0
+        // newWeight1 =
+        // newWeight2 =
+      }
+      const val1 = input1Array[i]
+      const val2 = input2Array[i]
+      //add the number to the table
+      allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: val1, input2: val2, output: output })
 
+    }
+    return allPatterns;
+    // setShowTable(true)
+    console.log("array elements", allPatterns);
 
-//  }
-setShowTable(true)
-
-}
+  }
   const formik = useFormik({
     initialValues: {
       w1: 0.0,
@@ -112,14 +135,15 @@ setShowTable(true)
       input1: 0,
       input2: 0,
       learningRate: 0.0,
-      opearation: 'AND',
+      operation: 'AND',
       threshold: 0.0,
-      operation: 0.0,
       outPut: 0.0,
       epoch: 1,
     },
-    onSubmit:  (values) => {
-       calculation(values)
+    onSubmit: (values) => {
+      const results = calculation(values)
+      setResult(results)
+      setShowTable(true)
       // alert(JSON.stringify(values, null, 2))
     },
   })
@@ -228,15 +252,6 @@ setShowTable(true)
                           value={formik.values.input2} />
                       </InputGroup>
                     </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>expected output </FormLabel>
-
-                      <InputGroup>
-
-                        <Input type="number" name="output" placeholder="01110111010" onChange={formik.handleChange}
-                          value={formik.values.outPut} />
-                      </InputGroup>
-                    </FormControl>
 
                     <FormControl isRequired>
                       <FormLabel>Weight 1 (w1)</FormLabel>
@@ -266,6 +281,21 @@ setShowTable(true)
                         />
                       </InputGroup>
                     </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Threshold</FormLabel>
+
+                      <InputGroup>
+
+                        <Input
+                          type="number"
+                          name="threshold"
+                          placeholder="0.1"
+                          onChange={formik.handleChange}
+                          value={formik.values.threshold}
+                        />
+                      </InputGroup>
+                    </FormControl>
+
                     <FormControl isRequired >
                       <FormLabel>Learning Rate</FormLabel>
                       <Select name='learningRate' placeholder='Select learning rate' onChange={formik.handleChange}
@@ -308,41 +338,36 @@ setShowTable(true)
           </Box>
         </Box>
       </form>
-      {showTable?<TableContainer>
-  <Table size='sm'>
-    <Thead>
-      <Tr>
-        <Th>To convert</Th>
-        <Th>into</Th>
-        <Th isNumeric>multiply by</Th>
-      </Tr>
-    </Thead>
-    <Tbody>
-      <Tr>
-        <Td>inches</Td>
-        <Td>millimetres (mm)</Td>
-        <Td isNumeric>25.4</Td>
-      </Tr>
-      <Tr>
-        <Td>feet</Td>
-        <Td>centimetres (cm)</Td>
-        <Td isNumeric>30.48</Td>
-      </Tr>
-      <Tr>
-        <Td>yards</Td>
-        <Td>metres (m)</Td>
-        <Td isNumeric>0.91444</Td>
-      </Tr>
-    </Tbody>
-    <Tfoot>
-      <Tr>
-        <Th>To convert</Th>
-        <Th>into</Th>
-        <Th isNumeric>multiply by</Th>
-      </Tr>
-    </Tfoot>
-  </Table>
-</TableContainer>:null}
+      {showTable ?
+
+        <Box padding={20} bg={'white'}>
+          <TableContainer>
+            <Table size='sm'>
+              <Thead>
+                <Tr>
+                  <Th>Input 1</Th>
+                  <Th>Input 2</Th>
+                  <Th>Weight 1</Th>
+                  <Th>Weight 2</Th>
+                  <Th>Output</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+
+                {result && result.map((single) => <Tr>
+                  <Td>{single.input1}</Td>
+                  <Td>{single.input2}</Td>
+                  <Td>{single.weight1}</Td>
+                  <Td>{single.weight2}</Td>
+
+                  <Td>{single.output}</Td>
+
+                </Tr>)}
+              </Tbody>
+
+            </Table>
+          </TableContainer> </Box> : null}
+
     </>
   );
 }
