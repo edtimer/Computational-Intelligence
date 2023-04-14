@@ -40,28 +40,28 @@ import { useFormik } from 'formik';
 
 const confetti = {
   light: {
-    primary: '4299E1', // blue.400
-    secondary: 'BEE3F8', // blue.100
+    primary: '4299E1',
+    secondary: 'BEE3F8',
   },
 
   dark: {
-    primary: '1A365D', // blue.900
-    secondary: '2A4365', // blue.800
+    primary: '1A365D',
+    secondary: '2A4365',
   },
 };
 
 
 export default function Home() {
   const handleCalculation = () => {
-    // const weight1 =weightOne
-    // const weight2 =weightTwo
-    // const operationType = operation
-    // const firstInput =input1
-    // const secondInput = input2
-    // const thresholdInput = threshhold
-    // const learningRateInput = learningRate
-    // console.log("what we got","input one:",firstInput,"input two: ",secondInput,"w1:",weight1,"w2",weight2,"threshold: ",thresholdInput,"learning rate:",learningRateInput,"operation: ",operationType)
-    // const result =
+
+
+
+
+
+
+
+
+
 
   }
   interface DataReceived {
@@ -80,17 +80,22 @@ export default function Home() {
   const [threshhold, setThreshhold] = useState(0.0)
   const [learningRate, setLearningRate] = useState(0.0)
   const [showTable, setShowTable] = useState(false)
-  const [result, setResult] = useState([{}])
+  const [result, setResult] = useState<DataReceived[]>([])
   const calculation = (values: any) => {
-    //'' added to number converts it to string
 
-    //create a big array of objects
+
+
     const allPatterns = []
-    // {w1,w2,input1,input2,result}
+
+    console.log("all received values", values)
     var newWeight1 = values.w1;
     var newWeight2 = values.w2;
     var output;
+    var expectedOutput;
+    var expectedOutputArray;
     const learningRate = values.learningRate;
+    var inputInNumberFormat1 = parseInt(values.input1, 2);
+    var inputInNumberFormat2 = parseInt(values.input2, 2);
     const input1 = '' + values.input1;
     const input2 = '' + values.input2;
     const input1Array = Array.from(String(input1), Number);
@@ -100,31 +105,67 @@ export default function Home() {
     console.log("values pure", values)
     console.log("array length", lengthInput1, lengthInput2)
     console.log("arrays", input1Array, input2Array)
-    // const element ={input1,input2,w1,w2}
-    // allPatterns.push(element)
-    console.log("all input element1,element2,w1,w2", input1Array.slice(-1)[0], input2Array.slice(-1)[0], values.w1, values.w2)
+    console.log("converted", inputInNumberFormat1, inputInNumberFormat2)
+
+
+    if (values.operation === 'AND') {
+      expectedOutput = (inputInNumberFormat1 & inputInNumberFormat2).toString(2)
+      console.log("AND operation", expectedOutput)
+      expectedOutputArray = Array.from(String(expectedOutput), Number)
+    }
+    else if (values.oepration === 'OR') {
+      expectedOutput = (inputInNumberFormat1 | inputInNumberFormat2).toString(2)
+      console.log("OR operation", expectedOutput)
+      expectedOutputArray = Array.from(String(expectedOutput), Number)
+      // console.log("expected array", expectedOutput)
+    }
+    else {
+      expectedOutput = (inputInNumberFormat1 & inputInNumberFormat2).toString(2)
+      expectedOutputArray = Array.from(String(expectedOutput), Number)
+      console.log("NOT operation", expectedOutput)
+    }
+
+    // console.log("all input element1,element2,w1,w2", input1Array.slice(-1)[0], input2Array.slice(-1)[0], values.w1, values.w2)
     setWeightOne(values.w1)
     setWeightTwo(values.w2)
     for (let i = 0; i < lengthInput1; i++) {
-      const pattern = (input1Array.slice(-1)[i] * values.w1) + (input2Array.slice(-1)[i] * values.w2)
-      console.log(`the result`, pattern)
-      if (pattern > values.threshhold) {
 
+      const arr1ReveresedElement = input1Array.slice().reverse()[i]
+      const expectedOutputReveresedArray = expectedOutputArray.slice().reverse()[i]
+      const arr2RevereseElement = input2Array.slice().reverse()[i]
+      const pattern = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
+      console.log(`patter${i} `, arr1ReveresedElement, '*', newWeight1, " + ", arr2RevereseElement, '*', newWeight2, " = ", pattern)
+
+
+      if (pattern > values.threshold) {
+        console.log("larger than threshold")
         output = 1
+
       }
       else {
         output = 0
-        // newWeight1 =
-        // newWeight2 =
-      }
-      const val1 = input1Array[i]
-      const val2 = input2Array[i]
-      //add the number to the table
-      allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: val1, input2: val2, output: output })
 
-    }
+
+      }
+      console.log("comparing ", expectedOutputReveresedArray, "the output: ", output)
+      if (expectedOutputReveresedArray !== output) {
+        console.log("not the same")
+        newWeight1 = Math.fround(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output))).toFixed(2)
+        newWeight2 = Math.fround(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output))).toFixed(2)
+        console.log("two new weights", newWeight1, newWeight2)
+         const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
+        const answer = pattern2<values.threshhold?0:1
+allPatterns.push({weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer})
+      }
+      else{
+
+        console.log("the same")
+              allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output })
+        
+            }
+      }
     return allPatterns;
-    // setShowTable(true)
+
     console.log("array elements", allPatterns);
 
   }
@@ -144,7 +185,7 @@ export default function Home() {
       const results = calculation(values)
       setResult(results)
       setShowTable(true)
-      // alert(JSON.stringify(values, null, 2))
+
     },
   })
 
