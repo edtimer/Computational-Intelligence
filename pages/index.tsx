@@ -70,6 +70,9 @@ export default function Home() {
     input1: number
     input2: number
     output: number
+    target: number
+    new: boolean
+    error: number
 
   }
   const [weightOne, setWeightOne] = useState(0.0)
@@ -81,9 +84,8 @@ export default function Home() {
   const [learningRate, setLearningRate] = useState(0.0)
   const [showTable, setShowTable] = useState(false)
   const [result, setResult] = useState<DataReceived[]>([])
+
   const calculation = (values: any) => {
-
-
 
     const allPatterns = []
 
@@ -102,6 +104,10 @@ export default function Home() {
     const input2Array = Array.from(String(input2), Number);
     const lengthInput1 = input1Array.length
     const lengthInput2 = input2Array.length
+    var error;
+    var ErrorAray = [lengthInput1]
+    var epoch = 0;
+    var loop;
     console.log("values pure", values)
     console.log("array length", lengthInput1, lengthInput2)
     console.log("arrays", input1Array, input2Array)
@@ -117,7 +123,7 @@ export default function Home() {
       expectedOutput = (inputInNumberFormat1 | inputInNumberFormat2).toString(2)
       console.log("OR operation", expectedOutput)
       expectedOutputArray = Array.from(String(expectedOutput), Number)
-      // console.log("expected array", expectedOutput)
+      console.log("expected array for OR", expectedOutput)
     }
     else {
       expectedOutput = (inputInNumberFormat1 & inputInNumberFormat2).toString(2)
@@ -128,292 +134,331 @@ export default function Home() {
     // console.log("all input element1,element2,w1,w2", input1Array.slice(-1)[0], input2Array.slice(-1)[0], values.w1, values.w2)
     setWeightOne(values.w1)
     setWeightTwo(values.w2)
-    for (let i = 0; i < lengthInput1; i++) {
+    // for (let e = 0; e < 4; e++) {
+      do {
 
-      const arr1ReveresedElement = input1Array.slice().reverse()[i]
-      const expectedOutputReveresedArray = expectedOutputArray.slice().reverse()[i]
-      const arr2RevereseElement = input2Array.slice().reverse()[i]
-      const pattern = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
-      console.log(`patter${i} `, arr1ReveresedElement, '*', newWeight1, " + ", arr2RevereseElement, '*', newWeight2, " = ", pattern)
+        for (let g = 0; g < 4; g++) {
 
-
-      if (pattern > values.threshold) {
-        console.log("larger than threshold")
-        output = 1
-
-      }
-      else {
-        output = 0
-
-
-      }
-      console.log("comparing ", expectedOutputReveresedArray, "the output: ", output)
-      if (expectedOutputReveresedArray !== output) {
-        // while (expectedOutputReveresedArray !== output) {
-
-          console.log("not the same")
-          newWeight1 = Math.fround(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output))).toFixed(2)
-          newWeight2 = Math.fround(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output))).toFixed(2)
-          console.log("two new weights", newWeight1, newWeight2)
-
-          const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
-          const answer = pattern2 < values.threshhold ? 0 : 1
-          allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer })
+          ErrorAray.pop()
         }
-      // }
-      else {
+        for (let i = 0; i < lengthInput1; i++) {
 
-        console.log("the same")
-        allPatterns.push({ weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output })
+          const arr1ReveresedElement = input1Array.slice().reverse()[i]
+          const expectedOutputReveresedArray = expectedOutputArray.slice().reverse()[i]
+          const arr2RevereseElement = input2Array.slice().reverse()[i]
+          const pattern = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
+          console.log(`patter${i} `, arr1ReveresedElement, '*', newWeight1, " + ", arr2RevereseElement, '*', newWeight2, " = ", pattern)
 
-      }
-    }
-    return allPatterns;
 
-    console.log("array elements", allPatterns);
+          if (pattern > values.threshold) {
+            console.log("larger than threshold")
+            output = 1
+
+          }
+          else {
+            output = 0
+
+
+          }
+          console.log("comparing ", expectedOutputReveresedArray, "the output: ", output)
+          if (expectedOutputReveresedArray !== output) {
+            // while (expectedOutputReveresedArray !== output) {
+            error = expectedOutputReveresedArray - output
+            ErrorAray.push(error)
+            allPatterns.push({ new: true, weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output, target: expectedOutputReveresedArray, error: error })
+
+            console.log("not the same")
+            newWeight1 = parseFloat(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output)))
+            console.log("type of variable", typeof (newWeight1))
+            newWeight2 = parseFloat(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output)))
+            console.log("two new weights", newWeight1, newWeight2)
+            const w1 = newWeight1.toFixed(1)
+            const w2 = newWeight2.toFixed(1)
+            const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
+            const answer = pattern2 <= values.threshhold ? 0 : 1
+            allPatterns.push({ new: false, weight1: w1, weight2: w2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer, target: expectedOutputReveresedArray, error: error })
+          }
+          // }
+          else {
+            ErrorAray.push(0)
+            const w1Unchanged = newWeight1.toFixed(1)
+            const w2Unchanged = newWeight2.toFixed(1)
+            console.log("the same")
+            allPatterns.push({ new: false, weight1: w1Unchanged, weight2: w2Unchanged, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output, target: expectedOutputReveresedArray, error: 0 })
+
+          }
+          console.log("Error array elements", ErrorAray);
+        }
+
+        for(let i=0; i<ErrorAray.length; i++){
+          console.log("checking if",ErrorAray[i]," = ",0)
+          if(ErrorAray[i] != 0){
+            console.log('in here')
+            loop = true;
+            break;
+          }
+        }
+
+        console.log('check loop value: ', loop)
+        return allPatterns;
+
+      } while (
+        // ErrorAray.length <= lengthInput1 &&
+        // ErrorAray.every(val => val != 0)
+        loop ===true
+        );
+        
+    // }
+    return []
 
   }
-  const formik = useFormik({
-    initialValues: {
-      w1: 0.0,
-      w2: 0.0,
-      input1: 0,
-      input2: 0,
-      learningRate: 0.0,
-      operation: 'AND',
-      threshold: 0.0,
-      outPut: 0.0,
-      epoch: 1,
-    },
-    onSubmit: (values) => {
-      const results = calculation(values)
-      setResult(results)
-      setShowTable(true)
 
-    },
-  })
+const formik = useFormik({
+  initialValues: {
+    w1: 0.0,
+    w2: 0.0,
+    input1: 0,
+    input2: 0,
+    learningRate: 0.0,
+    operation: 'AND',
+    threshold: 0.0,
+    outPut: 0.0,
+    epoch: 1,
+  },
+  onSubmit: (values) => {
+    const results = calculation(values)
+    setResult(results)
+    setShowTable(true)
 
-
-  return (
-    <>
-      <Head>
-        <title>Perceptron algorithm Computational intelligence group 10</title>
-        <meta name="description" content="Generated by create next app" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <form onSubmit={formik.handleSubmit}>
+  },
+})
 
 
-        <Box
-          borderRadius="lg"
-          m={{ base: 5, md: 16, lg: 10 }}
-          p={{ base: 5, lg: 16 }}>
-          <Box>
-            <VStack spacing={{ base: 4, md: 8, lg: 20 }}>
-              <Heading
-                fontSize={{
-                  base: '4xl',
-                  md: '5xl',
-                }}>
-                PERCEPTRON ALGORITHM DEMO
-              </Heading>
+return (
+  <>
+    <Head>
+      <title>Perceptron algorithm Computational intelligence group 10</title>
+      <meta name="description" content="Generated by create next app" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link rel="icon" href="/favicon.ico" />
+    </Head>
+    <form onSubmit={formik.handleSubmit}>
 
+
+      <Box
+        borderRadius="lg"
+        m={{ base: 5, md: 16, lg: 10 }}
+        p={{ base: 5, lg: 16 }}>
+        <Box>
+          <VStack spacing={{ base: 4, md: 8, lg: 20 }}>
+            <Heading
+              fontSize={{
+                base: '4xl',
+                md: '5xl',
+              }}>
+              PERCEPTRON ALGORITHM DEMO
+            </Heading>
+
+            <Stack
+              spacing={{ base: 4, md: 8, lg: 20 }}
+              direction={{ base: 'column', md: 'row' }}>
               <Stack
-                spacing={{ base: 4, md: 8, lg: 20 }}
-                direction={{ base: 'column', md: 'row' }}>
-                <Stack
-                  align="center"
-                  justify="space-around"
-                  direction={{ base: 'row', md: 'column' }}>
+                align="center"
+                justify="space-around"
+                direction={{ base: 'row', md: 'column' }}>
 
-                  <Link href="#">
-                    <IconButton
-                      aria-label="github"
-                      variant="ghost"
-                      size="lg"
-                      fontSize="3xl"
+                <Link href="#">
+                  <IconButton
+                    aria-label="github"
+                    variant="ghost"
+                    size="lg"
+                    fontSize="3xl"
 
-                      _hover={{
-                        bg: 'blue.500',
-                        color: useColorModeValue('white', 'gray.700'),
-                      }}
-                      isRound
-                    />
-                  </Link>
+                    _hover={{
+                      bg: 'blue.500',
+                      color: useColorModeValue('white', 'gray.700'),
+                    }}
+                    isRound
+                  />
+                </Link>
 
-                  <Link href="#">
-                    <IconButton
-                      aria-label="twitter"
-                      variant="ghost"
-                      size="lg"
+                <Link href="#">
+                  <IconButton
+                    aria-label="twitter"
+                    variant="ghost"
+                    size="lg"
 
-                      _hover={{
-                        bg: 'blue.500',
-                        color: useColorModeValue('white', 'gray.700'),
-                      }}
-                      isRound
-                    />
-                  </Link>
+                    _hover={{
+                      bg: 'blue.500',
+                      color: useColorModeValue('white', 'gray.700'),
+                    }}
+                    isRound
+                  />
+                </Link>
 
-                  <Link href="#">
-                    <IconButton
-                      aria-label="linkedin"
-                      variant="ghost"
-                      size="lg"
+                <Link href="#">
+                  <IconButton
+                    aria-label="linkedin"
+                    variant="ghost"
+                    size="lg"
 
-                      _hover={{
-                        bg: 'blue.500',
-                        color: useColorModeValue('white', 'gray.700'),
-                      }}
-                      isRound
-                    />
-                  </Link>
-                </Stack>
-
-                <Box
-                  bg={useColorModeValue('white', 'gray.700')}
-                  borderRadius="lg"
-                  p={8}
-                  color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                  shadow="base">
-                  <VStack spacing={5}>
-                    <FormControl isRequired>
-                      <FormLabel>Input 1 </FormLabel>
-
-                      <InputGroup>
-
-                        <Input type="number" name="input1" placeholder="01110111010" onChange={formik.handleChange}
-                          value={formik.values.input1} />
-                      </InputGroup>
-                    </FormControl>
-
-                    <FormControl isRequired>
-                      <FormLabel>Input 2 </FormLabel>
-
-                      <InputGroup>
-
-                        <Input type="number" name="input2" placeholder="01110111010" onChange={formik.handleChange}
-                          value={formik.values.input2} />
-                      </InputGroup>
-                    </FormControl>
-
-                    <FormControl isRequired>
-                      <FormLabel>Weight 1 (w1)</FormLabel>
-
-                      <InputGroup>
-
-                        <Input
-                          type="number"
-                          name="w1"
-                          placeholder="0.3"
-                          onChange={formik.handleChange}
-                          value={formik.values.w1}
-                        />
-                      </InputGroup>
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>Weight 2 (w2)</FormLabel>
-
-                      <InputGroup>
-
-                        <Input
-                          type="number"
-                          name="w2"
-                          placeholder="0.1"
-                          onChange={formik.handleChange}
-                          value={formik.values.w2}
-                        />
-                      </InputGroup>
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>Threshold</FormLabel>
-
-                      <InputGroup>
-
-                        <Input
-                          type="number"
-                          name="threshold"
-                          placeholder="0.1"
-                          onChange={formik.handleChange}
-                          value={formik.values.threshold}
-                        />
-                      </InputGroup>
-                    </FormControl>
-
-                    <FormControl isRequired >
-                      <FormLabel>Learning Rate</FormLabel>
-                      <Select name='learningRate' placeholder='Select learning rate' onChange={formik.handleChange}
-                        value={formik.values.learningRate}>
-
-
-                        <option value={0.1}>0.1</option>
-                        <option value={0.5}>0.5</option>
-                        <option value={1.0}>1.0</option>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl isRequired>
-                      <FormLabel>operation type</FormLabel>
-
-                      <Select placeholder='Select opertaion type' name="operation" onChange={formik.handleChange}
-                        value={formik.values.operation}>
-                        <option value={'AND'}>AND</option>
-                        <option value={'OR'}>OR</option>
-                        <option value={'NOT'}>NOT</option>
-
-                      </Select>
-                    </FormControl>
-
-                    <Button
-                      colorScheme="blue"
-                      bg="blue.400"
-                      color="white"
-                      _hover={{
-                        bg: 'blue.500',
-                      }}
-                      type='submit'
-                    >
-                      Generate
-                    </Button>
-                  </VStack>
-                </Box>
+                    _hover={{
+                      bg: 'blue.500',
+                      color: useColorModeValue('white', 'gray.700'),
+                    }}
+                    isRound
+                  />
+                </Link>
               </Stack>
-            </VStack>
-          </Box>
+
+              <Box
+                bg={useColorModeValue('white', 'gray.700')}
+                borderRadius="lg"
+                p={8}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                shadow="base">
+                <VStack spacing={5}>
+                  <FormControl isRequired>
+                    <FormLabel>Input 1 </FormLabel>
+
+                    <InputGroup>
+
+                      <Input type="number" name="input1" placeholder="01110111010" onChange={formik.handleChange}
+                        value={formik.values.input1} />
+                    </InputGroup>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>Input 2 </FormLabel>
+
+                    <InputGroup>
+
+                      <Input type="number" name="input2" placeholder="01110111010" onChange={formik.handleChange}
+                        value={formik.values.input2} />
+                    </InputGroup>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>Weight 1 (w1)</FormLabel>
+
+                    <InputGroup>
+
+                      <Input
+                        type="number"
+                        name="w1"
+                        placeholder="0.3"
+                        onChange={formik.handleChange}
+                        value={formik.values.w1}
+                      />
+                    </InputGroup>
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Weight 2 (w2)</FormLabel>
+
+                    <InputGroup>
+
+                      <Input
+                        type="number"
+                        name="w2"
+                        placeholder="0.1"
+                        onChange={formik.handleChange}
+                        value={formik.values.w2}
+                      />
+                    </InputGroup>
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Threshold</FormLabel>
+
+                    <InputGroup>
+
+                      <Input
+                        type="number"
+                        name="threshold"
+                        placeholder="0.1"
+                        onChange={formik.handleChange}
+                        value={formik.values.threshold}
+                      />
+                    </InputGroup>
+                  </FormControl>
+
+                  <FormControl isRequired >
+                    <FormLabel>Learning Rate</FormLabel>
+                    <Select name='learningRate' placeholder='Select learning rate' onChange={formik.handleChange}
+                      value={formik.values.learningRate}>
+
+
+                      <option value={0.1}>0.1</option>
+                      <option value={0.5}>0.5</option>
+                      <option value={1.0}>1.0</option>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>operation type</FormLabel>
+
+                    <Select placeholder='Select opertaion type' name="operation" onChange={formik.handleChange}
+                      value={formik.values.operation}>
+                      <option value={'AND'}>AND</option>
+                      <option value={'OR'}>OR</option>
+                      <option value={'NOT'}>NOT</option>
+
+                    </Select>
+                  </FormControl>
+
+                  <Button
+                    colorScheme="blue"
+                    bg="blue.400"
+                    color="white"
+                    _hover={{
+                      bg: 'blue.500',
+                    }}
+                    type='submit'
+                  >
+                    Generate
+                  </Button>
+                </VStack>
+              </Box>
+            </Stack>
+          </VStack>
         </Box>
-      </form>
-      {showTable ?
+      </Box>
+    </form>
+    {showTable ?
 
-        <Box padding={20} bg={'white'}>
-          <TableContainer>
-            <Table size='sm'>
-              <Thead>
-                <Tr>
-                  <Th>Input 1</Th>
-                  <Th>Input 2</Th>
-                  <Th>Weight 1</Th>
-                  <Th>Weight 2</Th>
-                  <Th>Output</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
+      <Box padding={20} bg={'white'} borderRadius={'large'} boxShadow={'xl'}>
+        <TableContainer>
+          <Table size='sm'>
+            <Thead>
+              <Tr>
+                <Th>Input 1</Th>
+                <Th>Input 2</Th>
+                <Th>Weight 1</Th>
+                <Th>Weight 2</Th>
+                <Th>Output</Th>
+                <Th>Target output</Th>
+                <Th>Error</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
 
-                {result && result.map((single) => <Tr>
-                  <Td>{single.input1}</Td>
-                  <Td>{single.input2}</Td>
-                  <Td>{single.weight1}</Td>
-                  <Td>{single.weight2}</Td>
+              {result && result.map((single) => <Tr>
 
-                  <Td>{single.output}</Td>
 
-                </Tr>)}
-              </Tbody>
+                {single.new ? null : <Td>{single.input1}</Td>}
+                {single.new ? null : <Td>{single.input2}</Td>}
+                {single.new ? null : <Td>{single.weight1}</Td>}
+                {single.new ? null : <Td>{single.weight2}</Td>}
+                {single.new ? null : <Td>{single.output}</Td>}
+                {single.new ? null : <Td>{single.target}</Td>}
+                {single.new ? null : <Td>{single.error}</Td>}
 
-            </Table>
-          </TableContainer> </Box> : null}
+              </Tr>)}
+            </Tbody>
 
-    </>
-  );
-}
+          </Table>
+        </TableContainer> </Box> : null}
+
+  </>
+);
+              }
 
