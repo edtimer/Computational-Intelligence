@@ -229,7 +229,7 @@ const Home = () => {
                     <option value="OR">OR</option>
                   </Select>
                 </FormControl>
-                <Button colorscheme={'blue'} type="submit">Submit</Button>
+                <Button colorScheme={'blue'} type="submit">Submit</Button>
                 {errorMessage && (
                   <Box mt={4} color="red.500">
                     {errorMessage}
