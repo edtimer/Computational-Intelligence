@@ -10,6 +10,7 @@ import {
   InputGroup,
   Link,
   Select,
+  Text,
   Stack,
   Table,
   Tbody,
@@ -152,12 +153,17 @@ const Home = () => {
 
   return (
     <>
+    <Box>
+
+ 
       <Head>
         <title>Perceptron Algorithm</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Container maxW="container.xl" py={10}>
+        <Text fontSize='4xl'>Group 2 - Computational intelligence</Text>
+      <Container maxW="container.xl" py={2}>
+
         <Center>
           <Box w="100%" p={5} borderWidth={1} borderRadius="lg">
             <form onSubmit={formik.handleSubmit}>
@@ -223,7 +229,7 @@ const Home = () => {
                     <option value="OR">OR</option>
                   </Select>
                 </FormControl>
-                <Button type="submit">Submit</Button>
+                <Button colorscheme={'blue'} type="submit">Submit</Button>
                 {errorMessage && (
                   <Box mt={4} color="red.500">
                     {errorMessage}
@@ -279,6 +285,7 @@ const Home = () => {
           </Box>
         )}
       </Container>
+      </Box>
     </>
   );
 };
