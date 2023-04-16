@@ -1,10 +1,4 @@
-import Head from 'next/head'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
-
-
-
-
+import Head from 'next/head';
 import {
   Box,
   Button,
@@ -12,15 +6,12 @@ import {
   FormControl,
   FormLabel,
   Heading,
-  IconButton,
   Input,
   InputGroup,
-  InputLeftElement,
   Link,
   Select,
   Stack,
   Table,
-  TableContainer,
   Tbody,
   Td,
   Textarea,
@@ -29,436 +20,267 @@ import {
   Thead,
   Tooltip,
   Tr,
-  useClipboard,
-  useColorModeValue,
   VStack,
+  Center,
+  Container,
 } from '@chakra-ui/react';
-import React, { useState } from 'react';
 import { useFormik } from 'formik';
+import { useState } from 'react';
+
+const Home = () => {
+  type Result = {
+    epoch: number;
+    input1: number;
+    input2: number;
+    target: number;
+    weight1: number;
+    weight2: number;
+    output: number;
+    error: number;
+    finalWeight1: number;
+    finalWeight2: number;
+  };
+
+  const [results, setResults] = useState<Result[]>([]);
+  const [showTable, setShowTable] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const formik = useFormik({
+    initialValues: {
+      input1: '1100',
+      input2: '1010',
+      w1: '0.3',
+      w2: '-0.1',
+      threshold: '0.2',
+      learningRate: '0.1',
+      operation: 'AND',
+    },
+    onSubmit: (values) => {
+      setErrorMessage('');
+        const calculatedResults: Result[] = calculatePerceptron(formik.values);
+        setResults(calculatedResults);
+        setShowTable(true);
+    },
+
+  });
+
+  const handleInput1Change = (event: React.ChangeEvent<HTMLInputElement>) => {
+    formik.setFieldValue("input1", event.target.value.toString());
+  };
+
+  const handleInput2Change = (event: React.ChangeEvent<HTMLInputElement>) => {
+    formik.setFieldValue("input2", event.target.value.toString());
+  };
+
+  const calculatePerceptron = (values: { input1: any; input2: any; w1: any; w2: any; threshold: any; learningRate: any; operation: string; }) => {
+    const { input1, input2, w1, w2, threshold, learningRate, operation } = values;
+
+    let weight1 = parseFloat(w1);
+    let weight2 = parseFloat(w2);
+    const t = parseFloat(threshold);
+    const lr = parseFloat(learningRate);
+    const reversedInput1 = String(input1).split('').reverse().join('');
+    const reversedInput2 = String(input2).split('').reverse().join('');
+
+    const inputs = [];
+    for (let i = 0; i < input1.length; i++) {
+      const x1 = parseInt(reversedInput1[i], 10);
+      const x2 = parseInt(reversedInput2[i], 10);
+      let target;
+
+      switch (operation) {
+        case 'AND':
+          target = x1 && x2;
+          break;
+        case 'OR':
+          target = x1 || x2;
+          break;
+        case 'NOT':
+          target = +!x1;
+          break;
+        case 'XOR':
+          target = x1 ^ x2;
+          break;
+        default:
+          throw new Error('Invalid operation');
+      }
+
+      inputs.push({ x1, x2, target });
+    }
+    const results: { epoch: number; input1: number; input2: number; target: number; weight1: number; weight2: number; output: number; error: number; finalWeight1: number; finalWeight2: number; }[] = [];
+
+    let epoch = 0;
+    let errors = -1;
+
+    while (errors !== 0) {
+      errors = 0;
+      inputs.forEach((input) => {
+        const sum = (weight1 * input.x1) + (weight2 * input.x2);
+        const y = sum >= t ? 1 : 0;
+        const error = input.target - y;
+
+        if (error !== 0) {
+          errors++;
+        }
+
+        const finalWeight1 = weight1 + (lr * error * input.x1);
+        const finalWeight2 = weight2 + (lr * error * input.x2);
+
+        results.push({
+          epoch,
+          input1: input.x1,
+          input2: input.x2,
+          target: input.target,
+          weight1,
+          weight2,
+          output: y,
+          error,
+          finalWeight1,
+          finalWeight2,
+        });
+
+        weight1 = finalWeight1;
+        weight2 = finalWeight2;
+      });
+
+      epoch++;
+    }
 
 
+    return results;
+  };
 
-const confetti = {
-  light: {
-    primary: '4299E1',
-    secondary: 'BEE3F8',
-  },
+  return (
+    <>
+      <Head>
+        <title>Perceptron Algorithm</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
 
-  dark: {
-    primary: '1A365D',
-    secondary: '2A4365',
-  },
+      <Container maxW="container.xl" py={10}>
+        <Center>
+          <Box w="100%" p={5} borderWidth={1} borderRadius="lg">
+            <form onSubmit={formik.handleSubmit}>
+              <VStack spacing={4} alignItems="stretch">
+                <FormControl>
+                  <FormLabel>Input 1</FormLabel>
+                  <Input type="number" name="input1" onChange={handleInput1Change} value={formik.values.input1} />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Input 2</FormLabel>
+                  <Input type="number" name="input2" onChange={handleInput2Change} value={formik.values.input2} />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Weight 1 (w1)</FormLabel>
+                  <Input
+                    type="number"
+                    step="any"
+                    name="w1"
+                    onChange={formik.handleChange}
+                    value={formik.values.w1}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Weight 2 (w2)</FormLabel>
+                  <Input
+                    type="number"
+                    step="any"
+                    name="w2"
+                    onChange={formik.handleChange}
+                    value={formik.values.w2}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Threshold</FormLabel>
+                  <Input
+                    type="number"
+                    step="any"
+                    name="threshold"
+                    onChange={formik.handleChange}
+                    value={formik.values.threshold}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Learning Rate</FormLabel>
+                  <Input
+                    type="number"
+                    step="any"
+                    name="learningRate"
+                    onChange={formik.handleChange}
+                    value={formik.values.learningRate}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Operation Type</FormLabel>
+                  <Select
+                    name="operation"
+                    onChange={formik.handleChange}
+                    value={formik.values.operation}
+                  >
+                    <option value="">Select operation</option>
+                    <option value="AND">AND</option>
+                    <option value="OR">OR</option>
+                  </Select>
+                </FormControl>
+                <Button type="submit">Submit</Button>
+                {errorMessage && (
+                  <Box mt={4} color="red.500">
+                    {errorMessage}
+                  </Box>
+                )}
+
+              </VStack>
+            </form>
+          </Box>
+        </Center>
+
+        {showTable && (
+          <Box mt={10}>
+            <Table variant="simple" size="sm">
+              <Thead>
+                <Tr>
+                  <Th>Epoch</Th>
+                  <Th>Input 1</Th>
+                  <Th>Input 2</Th>
+                  <Th>Desired Output</Th>
+                  <Th>Initial Weight 1</Th>
+                  <Th>Initial Weight 2</Th>
+                  <Th>Actual Output</Th>
+                  <Th>Error</Th>
+                  <Th>Final Weight 1</Th>
+                  <Th>Final Weight 2</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {results.map((result, index) => (
+                  <>
+                    <Tr key={index}>
+                      <Td>{result.epoch + 1}</Td>
+                      <Td>{result.input1}</Td>
+                      <Td>{result.input2}</Td>
+                      <Td>{result.target}</Td>
+                      <Td>{result.weight1.toFixed(2)}</Td>
+                      <Td>{result.weight2.toFixed(2)}</Td>
+                      <Td>{result.output}</Td>
+                      <Td>{result.error}</Td>
+                      <Td>{result.finalWeight1.toFixed(2)}</Td>
+                      <Td>{result.finalWeight2.toFixed(2)}</Td>
+                    </Tr>
+                    {index + 1 < results.length && results[index + 1].epoch !== result.epoch && (
+                      <Tr>
+                        <Td colSpan={10} />
+                      </Tr>
+                    )}
+                  </>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+        )}
+      </Container>
+    </>
+  );
 };
 
-
-export default function Home() {
-  const handleCalculation = () => {
-
-
-
-
-
-
-
-
-
-
-  }
-  interface DataReceived {
-    weight1: number
-    weight2: number
-    input1: number
-    input2: number
-    output: number
-    target: number
-    new: boolean
-    error: number
-
-  }
-  const [weightOne, setWeightOne] = useState(0.0)
-  const [weightTwo, setWeightTwo] = useState(0.0)
-  const [operation, setOperation] = useState('AND')
-  const [input1, setInput1] = useState(1)
-  const [input2, setInput2] = useState(0)
-  const [threshhold, setThreshhold] = useState(0.0)
-  const [learningRate, setLearningRate] = useState(0.0)
-  const [showTable, setShowTable] = useState(false)
-  const [result, setResult] = useState<DataReceived[]>([])
-
-  const calculation = (values: any) => {
-
-    const allPatterns = []
-
-    console.log("all received values", values)
-    var newWeight1 = values.w1;
-    var newWeight2 = values.w2;
-    var output;
-    var expectedOutput;
-    var expectedOutputArray;
-    const learningRate = values.learningRate;
-    var inputInNumberFormat1 = parseInt(values.input1, 2);
-    var inputInNumberFormat2 = parseInt(values.input2, 2);
-    const input1 = '' + values.input1;
-    const input2 = '' + values.input2;
-    const input1Array = Array.from(String(input1), Number);
-    const input2Array = Array.from(String(input2), Number);
-    const lengthInput1 = input1Array.length
-    const lengthInput2 = input2Array.length
-    var error;
-    var ErrorAray = [lengthInput1]
-    var epoch = 0;
-    var loop;
-    console.log("values pure", values)
-    console.log("array length", lengthInput1, lengthInput2)
-    console.log("arrays", input1Array, input2Array)
-    console.log("converted", inputInNumberFormat1, inputInNumberFormat2)
-
-
-    if (values.operation === 'AND') {
-      expectedOutput = (inputInNumberFormat1 & inputInNumberFormat2).toString(2)
-      console.log("AND operation", expectedOutput)
-      expectedOutputArray = Array.from(String(expectedOutput), Number)
-    }
-    else if (values.oepration === 'OR') {
-      expectedOutput = (inputInNumberFormat1 | inputInNumberFormat2).toString(2)
-      console.log("OR operation", expectedOutput)
-      expectedOutputArray = Array.from(String(expectedOutput), Number)
-      console.log("expected array for OR", expectedOutput)
-    }
-    else {
-      expectedOutput = (inputInNumberFormat1 & inputInNumberFormat2).toString(2)
-      expectedOutputArray = Array.from(String(expectedOutput), Number)
-      console.log("NOT operation", expectedOutput)
-    }
-
-    // console.log("all input element1,element2,w1,w2", input1Array.slice(-1)[0], input2Array.slice(-1)[0], values.w1, values.w2)
-    setWeightOne(values.w1)
-    setWeightTwo(values.w2)
-    // for (let e = 0; e < 4; e++) {
-      do {
-
-        for (let g = 0; g < 4; g++) {
-
-          ErrorAray.pop()
-        }
-        for (let i = 0; i < lengthInput1; i++) {
-
-          const arr1ReveresedElement = input1Array.slice().reverse()[i]
-          const expectedOutputReveresedArray = expectedOutputArray.slice().reverse()[i]
-          const arr2RevereseElement = input2Array.slice().reverse()[i]
-          const pattern = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
-          console.log(`patter${i} `, arr1ReveresedElement, '*', newWeight1, " + ", arr2RevereseElement, '*', newWeight2, " = ", pattern)
-
-
-          if (pattern > values.threshold) {
-            console.log("larger than threshold")
-            output = 1
-
-          }
-          else {
-            output = 0
-
-
-          }
-          console.log("comparing ", expectedOutputReveresedArray, "the output: ", output)
-          if (expectedOutputReveresedArray !== output) {
-            // while (expectedOutputReveresedArray !== output) {
-            error = expectedOutputReveresedArray - output
-            ErrorAray.push(error)
-            allPatterns.push({ new: true, weight1: newWeight1, weight2: newWeight2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output, target: expectedOutputReveresedArray, error: error })
-
-            console.log("not the same")
-            newWeight1 = parseFloat(newWeight1 + (values.learningRate * arr1ReveresedElement * (expectedOutputReveresedArray - output)))
-            console.log("type of variable", typeof (newWeight1))
-            newWeight2 = parseFloat(newWeight2 + (values.learningRate * arr2RevereseElement * (expectedOutputReveresedArray - output)))
-            console.log("two new weights", newWeight1, newWeight2)
-            const w1 = newWeight1.toFixed(1)
-            const w2 = newWeight2.toFixed(1)
-            const pattern2 = (arr1ReveresedElement * newWeight1) + (arr2RevereseElement * newWeight2)
-            const answer = pattern2 <= values.threshhold ? 0 : 1
-            allPatterns.push({ new: false, weight1: w1, weight2: w2, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: answer, target: expectedOutputReveresedArray, error: error })
-          }
-          // }
-          else {
-            ErrorAray.push(0)
-            const w1Unchanged = newWeight1.toFixed(1)
-            const w2Unchanged = newWeight2.toFixed(1)
-            console.log("the same")
-            allPatterns.push({ new: false, weight1: w1Unchanged, weight2: w2Unchanged, input1: arr1ReveresedElement, input2: arr2RevereseElement, output: output, target: expectedOutputReveresedArray, error: 0 })
-
-          }
-          console.log("Error array elements", ErrorAray);
-        }
-
-        for(let i=0; i<ErrorAray.length; i++){
-          console.log("checking if",ErrorAray[i]," = ",0)
-          if(ErrorAray[i] != 0){
-            console.log('in here')
-            loop = true;
-            break;
-          }
-        }
-
-        console.log('check loop value: ', loop)
-        return allPatterns;
-
-      } while (
-        // ErrorAray.length <= lengthInput1 &&
-        // ErrorAray.every(val => val != 0)
-        loop ===true
-        );
-        
-    // }
-    return []
-
-  }
-
-const formik = useFormik({
-  initialValues: {
-    w1: 0.0,
-    w2: 0.0,
-    input1: 0,
-    input2: 0,
-    learningRate: 0.0,
-    operation: 'AND',
-    threshold: 0.0,
-    outPut: 0.0,
-    epoch: 1,
-  },
-  onSubmit: (values) => {
-    const results = calculation(values)
-    setResult(results)
-    setShowTable(true)
-
-  },
-})
-
-
-return (
-  <>
-    <Head>
-      <title>Perceptron algorithm Computational intelligence group 10</title>
-      <meta name="description" content="Generated by create next app" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <link rel="icon" href="/favicon.ico" />
-    </Head>
-    <form onSubmit={formik.handleSubmit}>
-
-
-      <Box
-        borderRadius="lg"
-        m={{ base: 5, md: 16, lg: 10 }}
-        p={{ base: 5, lg: 16 }}>
-        <Box>
-          <VStack spacing={{ base: 4, md: 8, lg: 20 }}>
-            <Heading
-              fontSize={{
-                base: '4xl',
-                md: '5xl',
-              }}>
-              PERCEPTRON ALGORITHM DEMO
-            </Heading>
-
-            <Stack
-              spacing={{ base: 4, md: 8, lg: 20 }}
-              direction={{ base: 'column', md: 'row' }}>
-              <Stack
-                align="center"
-                justify="space-around"
-                direction={{ base: 'row', md: 'column' }}>
-
-                <Link href="#">
-                  <IconButton
-                    aria-label="github"
-                    variant="ghost"
-                    size="lg"
-                    fontSize="3xl"
-
-                    _hover={{
-                      bg: 'blue.500',
-                      color: useColorModeValue('white', 'gray.700'),
-                    }}
-                    isRound
-                  />
-                </Link>
-
-                <Link href="#">
-                  <IconButton
-                    aria-label="twitter"
-                    variant="ghost"
-                    size="lg"
-
-                    _hover={{
-                      bg: 'blue.500',
-                      color: useColorModeValue('white', 'gray.700'),
-                    }}
-                    isRound
-                  />
-                </Link>
-
-                <Link href="#">
-                  <IconButton
-                    aria-label="linkedin"
-                    variant="ghost"
-                    size="lg"
-
-                    _hover={{
-                      bg: 'blue.500',
-                      color: useColorModeValue('white', 'gray.700'),
-                    }}
-                    isRound
-                  />
-                </Link>
-              </Stack>
-
-              <Box
-                bg={useColorModeValue('white', 'gray.700')}
-                borderRadius="lg"
-                p={8}
-                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                shadow="base">
-                <VStack spacing={5}>
-                  <FormControl isRequired>
-                    <FormLabel>Input 1 </FormLabel>
-
-                    <InputGroup>
-
-                      <Input type="number" name="input1" placeholder="01110111010" onChange={formik.handleChange}
-                        value={formik.values.input1} />
-                    </InputGroup>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Input 2 </FormLabel>
-
-                    <InputGroup>
-
-                      <Input type="number" name="input2" placeholder="01110111010" onChange={formik.handleChange}
-                        value={formik.values.input2} />
-                    </InputGroup>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Weight 1 (w1)</FormLabel>
-
-                    <InputGroup>
-
-                      <Input
-                        type="number"
-                        name="w1"
-                        placeholder="0.3"
-                        onChange={formik.handleChange}
-                        value={formik.values.w1}
-                      />
-                    </InputGroup>
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>Weight 2 (w2)</FormLabel>
-
-                    <InputGroup>
-
-                      <Input
-                        type="number"
-                        name="w2"
-                        placeholder="0.1"
-                        onChange={formik.handleChange}
-                        value={formik.values.w2}
-                      />
-                    </InputGroup>
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>Threshold</FormLabel>
-
-                    <InputGroup>
-
-                      <Input
-                        type="number"
-                        name="threshold"
-                        placeholder="0.1"
-                        onChange={formik.handleChange}
-                        value={formik.values.threshold}
-                      />
-                    </InputGroup>
-                  </FormControl>
-
-                  <FormControl isRequired >
-                    <FormLabel>Learning Rate</FormLabel>
-                    <Select name='learningRate' placeholder='Select learning rate' onChange={formik.handleChange}
-                      value={formik.values.learningRate}>
-
-
-                      <option value={0.1}>0.1</option>
-                      <option value={0.5}>0.5</option>
-                      <option value={1.0}>1.0</option>
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>operation type</FormLabel>
-
-                    <Select placeholder='Select opertaion type' name="operation" onChange={formik.handleChange}
-                      value={formik.values.operation}>
-                      <option value={'AND'}>AND</option>
-                      <option value={'OR'}>OR</option>
-                      <option value={'NOT'}>NOT</option>
-
-                    </Select>
-                  </FormControl>
-
-                  <Button
-                    colorScheme="blue"
-                    bg="blue.400"
-                    color="white"
-                    _hover={{
-                      bg: 'blue.500',
-                    }}
-                    type='submit'
-                  >
-                    Generate
-                  </Button>
-                </VStack>
-              </Box>
-            </Stack>
-          </VStack>
-        </Box>
-      </Box>
-    </form>
-    {showTable ?
-
-      <Box padding={20} bg={'white'} borderRadius={'large'} boxShadow={'xl'}>
-        <TableContainer>
-          <Table size='sm'>
-            <Thead>
-              <Tr>
-                <Th>Input 1</Th>
-                <Th>Input 2</Th>
-                <Th>Weight 1</Th>
-                <Th>Weight 2</Th>
-                <Th>Output</Th>
-                <Th>Target output</Th>
-                <Th>Error</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-
-              {result && result.map((single) => <Tr>
-
-
-                {single.new ? null : <Td>{single.input1}</Td>}
-                {single.new ? null : <Td>{single.input2}</Td>}
-                {single.new ? null : <Td>{single.weight1}</Td>}
-                {single.new ? null : <Td>{single.weight2}</Td>}
-                {single.new ? null : <Td>{single.output}</Td>}
-                {single.new ? null : <Td>{single.target}</Td>}
-                {single.new ? null : <Td>{single.error}</Td>}
-
-              </Tr>)}
-            </Tbody>
-
-          </Table>
-        </TableContainer> </Box> : null}
-
-  </>
-);
-              }
-
+export default Home;
